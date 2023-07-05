@@ -23,7 +23,7 @@ class ElfParser:
             pass
         self.func_sort = dict(sorted(self.functions.items(), key = lambda x : x[1]))
 
-    def get_start_add(self):
+    def get_start_addr(self):
         return self.func_sort.get('_init')
     
     def get_func_address(self, func_name):
@@ -54,6 +54,23 @@ class ElfParser:
 
         return out_addr, len_addr
     
+    def get_indata_arr(self):
+        indata_arr=[]
+        symb_indata = self.elf_file.get_symbol("InData")
+        symb_indata1 = self.elf_file.get_symbol("InData1")
+        symb_indata2 = self.elf_file.get_symbol("InData2")
+        symb_indata3 = self.elf_file.get_symbol("InData3")
+        symb_indata4 = self.elf_file.get_symbol("InData4")
+        symb_indata5 = self.elf_file.get_symbol("InData5")
+        indata_arr.append(symb_indata.value) # 주소값
+        indata_arr.append(symb_indata1.value) # 주소값
+        indata_arr.append(symb_indata2.value) # 주소값
+        indata_arr.append(symb_indata3.value) # 주소값
+        indata_arr.append(symb_indata4.value) # 주소값
+        indata_arr.append(symb_indata5.value) # 주소값
+        return indata_arr
+
+
     def section_data_list(self):
         sections = []
         cnt = 0
@@ -81,6 +98,19 @@ class ElfParser:
             print('section content size : ',end = "")
             print(section.original_size)
             print("--------------------------")
+
+    def check_list(self,list_input):
+        i = 0
+        a = len(list_input)-1
+        while i < a:
+            if list_input[i][1] == list_input[i+1][1]:
+                del list_input[i+1]
+                a = a - 1
+                i = i + 1
+            i = i + 1
+        return list_input
+
+
 
 
 

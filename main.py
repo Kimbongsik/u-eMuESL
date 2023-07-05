@@ -1,4 +1,4 @@
-from Emulate import *
+from emul import *
 
 if __name__ == '__main__':
-    run() # execute the program
+    run() # execute the program. start emulating

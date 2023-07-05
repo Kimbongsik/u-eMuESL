@@ -21,8 +21,9 @@ class ARM:
         self.B = b
     
     def cycle_cal(self, ins, modified_ins):
-        self.instructions = json.load(j_f)
-
+        with open(self.json_file) as j_f:
+            self.instructions = json.load(j_f)
+        
         try:
             ins_key = self.instructions['hw'][self.core][ins]
 
@@ -57,7 +58,6 @@ class ARM:
         except:
             print("Invalid instruction")
 
-        f.close()
 
 
     

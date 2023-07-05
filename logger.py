@@ -52,7 +52,7 @@ def print_mem(uc,addr, m_len):
 def write_log(uc, address, user_data):
 
     temp = sys.stdout
-    addr = int((address-emu_ADDRESS)/4)
+    addr = int((address-START_ADDRESS)/4)
     print("[" + str(hex(address)) + "]", end=' ')
     print("instruction :", user_data[addr][0],end=' ')
     print("/ register data :", end="")
