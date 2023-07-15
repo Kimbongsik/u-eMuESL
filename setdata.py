@@ -9,12 +9,10 @@ copy_mne = []
 make_ins_inIdx = 0
 make_ins_cnt = 0
 
+mem_modified = False
+modified_mem_addr = 0
 
-
-
-clock = ccycle.ARM("Cortex-M4", 1, 1, 1)
-
-
+#clock = ccycle.ARM("Cortex-M4", 1, 1, 1)
 
 try:
     with open("./input.json", "r") as j_f:
@@ -46,15 +44,11 @@ f_list = list(e.func_sort.items())
 func_list = e.check_list(f_list)
 
 
-
 # mapping address
 START_ADDRESS = e.get_start_addr()
 
 STACK_ADDRESS = 0x20000000
 STACK_SIZE = 0x10000
-
-
-
 
 
 exit_addr = e.get_func_address('exit')

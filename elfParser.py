@@ -39,6 +39,7 @@ class ElfParser:
     def get_code(self, address):
         try:
             with open(self.elf_file_name, "rb") as f:
+                
                 f.seek(address, 0)
                 code = f.read()
         except:

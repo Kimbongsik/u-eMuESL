@@ -4,16 +4,26 @@ from unicorn.arm_const import *
 from setdata import *
 from logger import *
 
-def upload(uc, elf_file, e_section_list):
-    for i in range(len(e_section_list)):
+def auto_set(uc, size, stack_addr, stack_size):
+    uc.mem_map(0x0,1024)
+    uc.mem_map(START_ADDRESS,size)
+    uc.mem_map(stack_addr-stack_size,stack_size)
+    uc.reg_write(UC_ARM_REG_SP, stack_addr)
+    uc.reg_write(UC_ARM_REG_FP, stack_addr)
+    uc.reg_write(UC_ARM_REG_LR, exit_addr)
+
+def upload(uc):
+    for i in range(len(e_sec)):
+        # read file from start address to eof
         with open(elf_file, "rb") as f:
-            f.seek(e_section_list[i][1],0) # go to section data offset
-            code = f.read(e_section_list[i][2]) # read as much as original_size
-        
-        if e_section_list[i][0] != 0: # virtual address != 0
-            uc.mem_write(e_section_list[i][0], code) # virtual_address
+            f.seek(e_sec[i][1],0)
+            cod = f.read(e_sec[i][2])
+
+        if e_sec[i][0] != 0:
+            uc.mem_write(e_sec[i][0],cod)
         else:
-            uc.mem_write(e_section_list[i][1], code) # offset(flash address)
+            uc.mem_write(e_sec[i][1],cod) 
+
 
 def get_input_data(indata_arr):
     for i in range(len(indata_arr)):
@@ -91,14 +101,13 @@ def code_hook(uc, address, size, user_data):
     if address == exit_addr_real:
         uc.emu_stop()
 
+
 def run():
 
     refcod = CODE
     refaddr = START_ADDRESS
     while len(copy_mne)/int(len(CODE)/4) < 1:
         refcod, refaddr = make_refer(refcod,refaddr)
-
-    print(refaddr)
 
     print("Emulating the code..")
 
@@ -107,18 +116,9 @@ def run():
         mu = Uc(UC_ARCH_ARM, UC_MODE_ARM)
 
         # map 4MB memory for emulating
-        mu.mem_map(START_ADDRESS, 4*1024*1024) # emulate to _init
-        mu.mem_map(0x0, 1024)  
-        mu.mem_map(STACK_ADDRESS - STACK_SIZE, STACK_SIZE) # stack region
+        auto_set(mu,4*1024*1024,STACK_ADDRESS,STACK_SIZE)
 
-        upload(mu, elf_file, e_section_list)
-
-        # initialize machine registers
-        mu.reg_write(UC_ARM_REG_SP, STACK_ADDRESS)
-        mu.reg_write(UC_ARM_REG_FP, STACK_ADDRESS)
-        mu.reg_write(UC_ARM_REG_LR, exit_addr)
-
-        
+        upload(mu)
 
         # add callback function
         mu.hook_add(UC_HOOK_CODE, code_hook, copy_mne, begin= START_ADDRESS, end= START_ADDRESS + len(CODE))
@@ -128,11 +128,11 @@ def run():
 
         print(">>> Emulation done. Below is the CPU context")
 
-        print("InData = ", end="")
-        InData = get_input_data(InData_arr)
-        OutData = get_output_data(mu,OutData_addr,length_addr)
-        print("OutData = ", end="")
-        print(OutData)
+        # print("InData = ", end="")
+        # InData = get_input_data(InData_arr)
+        # OutData = get_output_data(mu,OutData_addr,length_addr)
+        # print("OutData = ", end="")
+        # print(OutData)
 
     except UcError as e:
         print("ERROR: %s" % e)

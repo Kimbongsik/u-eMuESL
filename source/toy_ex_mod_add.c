@@ -64,29 +64,7 @@ void RAND_XOR(uint32_t *out, uint32_t *in){
 	out[1] = in[1] ^ tmp[0];
 }
 
-// bool IO_RECEIVE(uint32_t* input){
-//   for(int i = 0; i < 30;i++){
-//     scanf("%d",*(input+i));
-//     if(input[i] == "\n"){
-//       break;
-//     }
-//   }
-//   if(*(input) != NULL){
-//     return true;
-//   }
-//   else{
-//     return false;
-//   }
-// }
 
-// void IO_TRANSMIT(uint32_t* output){
-//   FILE* fp = fopen("result.txt","w");
-//   int output_len = sizeof(output)/sizeof(uint32_t);
-//   for(int i = 0; i < output_len; i++){
-//     fprintf(fp, "output[%d] = [%zu]", i , &output[i]);
-//   }
-//   fclose(fp);
-// }
 
 void main(void){
   bool RcvState = true; //IO_RECEIVE(InData);
@@ -114,3 +92,27 @@ void main(void){
   }
 
 }
+
+// bool IO_RECEIVE(uint32_t* input){
+//   for(int i = 0; i < 30;i++){
+//     scanf("%d",*(input+i));
+//     if(input[i] == "\n"){
+//       break;
+//     }
+//   }
+//   if(*(input) != NULL){
+//     return true;
+//   }
+//   else{
+//     return false;
+//   }
+// }
+
+// void IO_TRANSMIT(uint32_t* output){
+//   FILE* fp = fopen("result.txt","w");
+//   int output_len = sizeof(output)/sizeof(uint32_t);
+//   for(int i = 0; i < output_len; i++){
+//     fprintf(fp, "output[%d] = [%zu]", i , &output[i]);
+//   }
+//   fclose(fp);
+// }
