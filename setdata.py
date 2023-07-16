@@ -12,7 +12,7 @@ make_ins_cnt = 0
 mem_modified = False
 modified_mem_addr = 0
 
-#clock = ccycle.ARM("Cortex-M4", 1, 1, 1)
+clock = ccycle.ARM("Cortex-M4", 1, 1, 1)
 
 try:
     with open("./input.json", "r") as j_f:

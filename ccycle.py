@@ -19,25 +19,30 @@ class ARM:
         self.div_num = div_num[dn]
         self.P = p
         self.B = b
+        self.N = 0
     
-    def cycle_cal(self, ins, modified_ins):
+    def cycle_cal(self, ins, modified_ins, op_str):
         with open(self.json_file) as j_f:
-            self.instructions = json.load(j_f)
+            arch = json.load(j_f)
+
+        with open(arch['arch'][self.core]) as arch_f:
+            ins_set = json.load(arch_f)
         
+        j_f.close()
         try:
-            ins_key = self.instructions['hw'][self.core][ins]
+            ins_key = ins_set['ins_set'][ins]
 
             if type(ins_key) == int:
-                return ins_key
+                print(ins_key)
 
             elif type(ins_key) == list:
 
                 # branch instructions, check if branches
                 if ins_key[1] == list:
-                    if 'pc' in modified_ins:
-                        return ins_key[0]
+                    if op_str.find('pc') == -1:
+                        print(ins_key[0])
                     else:
-                        return 1 + self.P
+                        print(1 + self.P)
                 
                 else:
                     sum_cyc = 0
@@ -47,13 +52,14 @@ class ARM:
                         elif ins_key[i] == "B":
                             ins_key[i] = self.B
                         elif ins_key[i] == "N":
-                            modified_ins
+                            self.N = len(op_str[op_str.find('{') + 1: op_str.find('}')].split(','))
+                            ins_key[i] = self.N
                         sum_cyc += ins_key[i]
-                    return sum_cyc
+                    print(sum_cyc)
 
             else :
                 if ins_key == "div_num":
-                    return self.div_num
+                    print(self.div_num)
             
         except:
             print("Invalid instruction")

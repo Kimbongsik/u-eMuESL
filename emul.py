@@ -126,7 +126,7 @@ def run():
         # add address should be same as main function length
         mu.emu_start(emu_ADDRESS, emu_ADDRESS + main_len)
 
-        print(">>> Emulation done. Below is the CPU context")
+        print(">>> Emulation done.")
 
         # print("InData = ", end="")
         # InData = get_input_data(InData_arr)

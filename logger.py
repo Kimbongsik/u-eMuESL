@@ -42,7 +42,6 @@ def print_all_reg(uc):
     print("PC = 0x%x" %pc, end = ', ')
     print("CPSR = 0x%x" %cpsr, end = ' ')
 
-
 # print 'len' length memory at 'addr' address
 def print_instruction(uc,addr, m_len):
     mc = Cs(CS_ARCH_ARM, CS_MODE_ARM)
@@ -56,6 +55,7 @@ def print_instruction(uc,addr, m_len):
 def print_mem(uc, modify_mem, op_str):
     global modified_mem_addr
     ins = ''
+
     for i in range(modify_mem + 1, len(op_str)):
         if op_str[i] == ']' :
             break
@@ -70,9 +70,12 @@ def print_mem(uc, modify_mem, op_str):
     else:
         reg_val = eval('uc.reg_read(UC_ARM_REG_' + ins.upper() +')')
         mem_val = uc.mem_read(reg_val, 4)
-
-    for i in range(len(mem_val)):
-        print("\\x%x" %mem_val[i], end = "")
+    
+    print("modified address: [" , hex(reg_val), "]")
+    
+    print("/ memory before modification: ", end ='')
+    for j in range(len(mem_val)):
+        print("\\x%x" %mem_val[j], end = "")
     print()
     modified_mem_addr = reg_val
 
@@ -95,11 +98,10 @@ def write_log(uc, address, user_data):
     print("/ register data :", end=' ')
     print_all_reg(uc)
     print("/ modified register : ", end ='')
-    print(user_data[addr][1:])
-    #print("/ clock count : ", end ='')
-    #print(clock.cycle_cal(user_data[addr][0], user_data[addr][1:]))
-    if modify_mem != -1:
-        print("/ memory before modification: ", end ='')
+    print(user_data[addr][1:], end = '')
+    print("/ clock count : ", end ='')
+    clock.cycle_cal(user_data[addr][0], user_data[addr][1:], op_str)
+    if modify_mem != -1 and user_data[addr][0].find('str') != -1:
         print_mem(uc, modify_mem, op_str)
         mem_modified = True
     sys.stdout = temp

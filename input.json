@@ -4,7 +4,8 @@
         "log_file_name" : "mylog"
     },
 
-    "Arch" : {
-        "Cortex-M4" : "./Cortex-M4.json"
+    "arch" : {
+        "Cortex-M4" : "./cortex_m4.json"
     }
 }
+
