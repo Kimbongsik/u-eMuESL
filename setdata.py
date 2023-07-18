@@ -40,6 +40,7 @@ refsIdx = 1
 reffIdx = 0
 
 e_sec = e.check_list(e_section_list)
+
 f_list = list(e.func_sort.items())
 func_list = e.check_list(f_list)
 
@@ -59,12 +60,9 @@ main_len = e.get_main_len()
 # code to emulate
 CODE = e.get_code(START_ADDRESS)
 
+# input & output data
 OutData_addr, length_addr = e.get_output_symbol_data()
 InData_arr = e.get_indata_arr()
-
-
-
-
 
 
 

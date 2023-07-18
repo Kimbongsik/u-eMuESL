@@ -64,8 +64,6 @@ void RAND_XOR(uint32_t *out, uint32_t *in){
 	out[1] = in[1] ^ tmp[0];
 }
 
-
-
 void main(void){
   bool RcvState = true; //IO_RECEIVE(InData);
   if(RcvState == true){

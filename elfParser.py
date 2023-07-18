@@ -71,9 +71,9 @@ class ElfParser:
         indata_arr.append(symb_indata5.value) # 주소값
         return indata_arr
 
-
     def section_data_list(self):
         sections = []
+        
         cnt = 0
         for section in self.elf_file.sections:
             section_list = []
@@ -83,8 +83,9 @@ class ElfParser:
             sections[cnt].append(section.original_size)
             sections[cnt].append(section.name)
             cnt += 1
+            
         return sections
-    
+
     def _print_section_data_list(self):
         for section in self.elf_file.sections:
             print('section name : ',end = "")
@@ -117,5 +118,5 @@ class ElfParser:
 
 
 # e =ElfParser("./source/toy_ex_mod_add")
-# e._print_section_data_list()
+# print(e.get_symbol())
 

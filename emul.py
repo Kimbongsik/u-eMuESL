@@ -3,9 +3,9 @@ from capstone import *
 from unicorn.arm_const import *
 from setdata import *
 from logger import *
+import os
 
 def auto_set(uc, size, stack_addr, stack_size):
-    uc.mem_map(0x0,1024)
     uc.mem_map(START_ADDRESS,size)
     uc.mem_map(stack_addr-stack_size,stack_size)
     uc.reg_write(UC_ARM_REG_SP, stack_addr)
@@ -24,7 +24,6 @@ def upload(uc):
         else:
             uc.mem_write(e_sec[i][1],cod) 
 
-
 def get_input_data(indata_arr):
     for i in range(len(indata_arr)):
         print("InData%d address is " %(i),end = "")
@@ -41,6 +40,7 @@ def get_output_data(uc,out_addr,len_addr):
         output.append(cvt_output)
     return output
 
+
 def make_refer(input, addr):
     global make_ins_inIdx, make_ins_cnt, refsIdx, reffIdx
 
@@ -53,17 +53,19 @@ def make_refer(input, addr):
     # add modified register at copy_mne
     for insn in mc.disasm(input, addr):
         #print("%x, %x, %x" % (insn.address,e_sec[refsIdx][1],func_list[reffIdx][1]))
-        if (e_sec[refsIdx][1]) == insn.address:
+        if e_sec[refsIdx][1] == insn.address:
             f.write("\nsection\t\t : %s\n\n" % (e_sec[refsIdx][3]))
             refsIdx += 1
             if refsIdx == len(e_sec):
-                refsIdx = len(e_sec)-1
+                refsIdx = len(e_sec)-1                
+
         if func_list[reffIdx][1] == insn.address:
             f.write("\nfunction\t : %s\n\n" % (func_list[reffIdx][0]))
             reffIdx += 1
             if reffIdx == len(func_list):
                 reffIdx = len(func_list)-1
-        f.write("0x%x:\t%s\t%s\n" %(insn.address, insn.mnemonic, insn.op_str)) #remove comment when make reference file
+       
+        f.write("0x%x:\t%s\t%s\n" %(insn.address, insn.mnemonic, insn.op_str))
         line = []
         copy_mne.append(line)
         copy_mne[make_ins_inIdx].append(insn.mnemonic)
@@ -103,6 +105,9 @@ def code_hook(uc, address, size, user_data):
 
 
 def run():
+
+    if os.path.isfile('reference.txt'):
+        os.remove('reference.txt')
 
     refcod = CODE
     refaddr = START_ADDRESS
