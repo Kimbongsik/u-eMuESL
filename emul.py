@@ -50,7 +50,7 @@ def make_refer(input, addr):
     mc.detail = True
     virtual_addr = 0
     sec_name = ""
-    num = 1
+    num = 0
     # copy mnemonics to copy_mne
     # add modified register at copy_mne
 
@@ -60,7 +60,7 @@ def make_refer(input, addr):
         if e_sec[refsIdx][1] == insn.address:
             f.write("\nsection\t\t : %s\n" % e_sec[refsIdx][3])
             if e_sec[refsIdx][0] != 0:
-                f.write("virtual address(RAM ADDRESS) : %s\n\n" % hex(e_sec[refsIdx][0]))
+                f.write("RAM ADDRESS : %s\n\n" % hex(e_sec[refsIdx][0]))
                 virtual_addr = e_sec[refsIdx][0]
                 sec_name = e_sec[refsIdx][3]
                 
@@ -76,8 +76,11 @@ def make_refer(input, addr):
         
         if virtual_addr != 0 and (sec_name == '.data') :
             f.write("0x%x:[0x%x] \t%s\t%s" %(insn.address, virtual_addr, insn.mnemonic, insn.op_str))
-            if virtual_addr in InData_arr and num != 6:
-                f.write("-------------------------------------------------InData%d\n" %num)
+            if virtual_addr in InData_arr:
+                if num == 0:
+                    f.write("-------------------------------------------------InData\n")
+                else:
+                    f.write("-------------------------------------------------InData%d\n" %num)
                 num += 1
             else:
                 f.write("\n")
