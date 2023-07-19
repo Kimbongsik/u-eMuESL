@@ -60,7 +60,7 @@ def make_refer(input, addr):
         if e_sec[refsIdx][1] == insn.address:
             f.write("\nsection\t\t : %s\n" % e_sec[refsIdx][3])
             if e_sec[refsIdx][0] != 0:
-                f.write("RAM ADDRESS : %s\n\n" % hex(e_sec[refsIdx][0]))
+                f.write("REAL ADDRESS : %s\n\n" % hex(e_sec[refsIdx][0]))
                 virtual_addr = e_sec[refsIdx][0]
                 sec_name = e_sec[refsIdx][3]
                 
@@ -75,15 +75,19 @@ def make_refer(input, addr):
                 reffIdx = len(func_list)-1
         
         if virtual_addr != 0 and (sec_name == '.data') :
-            f.write("0x%x:[0x%x] \t%s\t%s" %(insn.address, virtual_addr, insn.mnemonic, insn.op_str))
+            f.write("0x%x:[0x%x] " %(insn.address, virtual_addr))
+            for j in range(len(insn.bytes)):
+                f.write("\\x%x" %insn.bytes[j])
+
             if virtual_addr in InData_arr:
                 if num == 0:
-                    f.write("-------------------------------------------------InData\n")
+                    f.write("  -------------------------------------------------InData\n")
                 else:
-                    f.write("-------------------------------------------------InData%d\n" %num)
+                    f.write("  -------------------------------------------------InData%d\n" %num)
                 num += 1
             else:
                 f.write("\n")
+                
         else:
             f.write("0x%x:\t%s\t%s\n" %(insn.address, insn.mnemonic, insn.op_str))
         
@@ -127,6 +131,35 @@ def code_hook(uc, address, size, user_data):
         uc.emu_stop()
 
 
+# def make_refer():
+
+#     f = open ('reference.txt', 'a')
+#     mc = Cs(CS_ARCH_ARM, CS_MODE_ARM)
+#     mc.syntax = None
+#     mc.detail = True
+    
+#     code = CODE
+#     addr = START_ADDRESS
+
+#     ptr = 0
+#     input = code[0]
+#     # with open(elf_file, "rb") as f:
+#     #     f.seek(addr, 0)
+#     #     fcode = f.read()
+
+#     while(ptr != len(CODE)):
+#         refIdx = 0
+#         refSec = False
+#         input = code[ptr:ptr+4]
+#         ptr += 4
+#         for insn in mc.disasm(input, addr):
+#             #print("%x, %x, %x" % (insn.address,e_sec[refsIdx][1],func_list[reffIdx][1]))
+#             if insn.address in e_sec:
+#                 f.write("\nsection\t\t : %s\n" % e_sec[refsIdx][3])
+
+
+
+
 def run():
 
     if os.path.isfile('reference.txt'):
@@ -134,6 +167,7 @@ def run():
 
     refcod = CODE
     refaddr = START_ADDRESS
+
     while len(copy_mne)/int(len(CODE)/4) < 1:
         refcod, refaddr = make_refer(refcod,refaddr)
 
