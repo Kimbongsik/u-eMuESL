@@ -39,7 +39,7 @@ def get_output_data(uc,out_addr,len_addr):
         cvt_output = int.from_bytes(out_mem,byteorder="little")
         output.append(cvt_output)
     return output
-
+    
 
 def make_refer(input, addr):
     global make_ins_inIdx, make_ins_cnt, refsIdx, reffIdx
@@ -48,24 +48,44 @@ def make_refer(input, addr):
     mc = Cs(CS_ARCH_ARM, CS_MODE_ARM)
     mc.syntax = None
     mc.detail = True
-
+    virtual_addr = 0
+    sec_name = ""
+    num = 1
     # copy mnemonics to copy_mne
     # add modified register at copy_mne
+
     for insn in mc.disasm(input, addr):
         #print("%x, %x, %x" % (insn.address,e_sec[refsIdx][1],func_list[reffIdx][1]))
+        
         if e_sec[refsIdx][1] == insn.address:
-            f.write("\nsection\t\t : %s\n\n" % (e_sec[refsIdx][3]))
+            f.write("\nsection\t\t : %s\n" % e_sec[refsIdx][3])
+            if e_sec[refsIdx][0] != 0:
+                f.write("virtual address(RAM ADDRESS) : %s\n\n" % hex(e_sec[refsIdx][0]))
+                virtual_addr = e_sec[refsIdx][0]
+                sec_name = e_sec[refsIdx][3]
+                
             refsIdx += 1
             if refsIdx == len(e_sec):
-                refsIdx = len(e_sec)-1                
-
+                refsIdx = len(e_sec)-1      
+                     
         if func_list[reffIdx][1] == insn.address:
             f.write("\nfunction\t : %s\n\n" % (func_list[reffIdx][0]))
             reffIdx += 1
             if reffIdx == len(func_list):
                 reffIdx = len(func_list)-1
-       
-        f.write("0x%x:\t%s\t%s\n" %(insn.address, insn.mnemonic, insn.op_str))
+        
+        if virtual_addr != 0 and (sec_name == '.data') :
+            f.write("0x%x:[0x%x] \t%s\t%s" %(insn.address, virtual_addr, insn.mnemonic, insn.op_str))
+            if virtual_addr in InData_arr and num != 6:
+                f.write("-------------------------------------------------InData%d\n" %num)
+                num += 1
+            else:
+                f.write("\n")
+        else:
+            f.write("0x%x:\t%s\t%s\n" %(insn.address, insn.mnemonic, insn.op_str))
+        
+        virtual_addr += 4
+
         line = []
         copy_mne.append(line)
         copy_mne[make_ins_inIdx].append(insn.mnemonic)

@@ -57,6 +57,7 @@ class ElfParser:
     
     def get_indata_arr(self):
         indata_arr=[]
+        indata = []
         symb_indata = self.elf_file.get_symbol("InData")
         symb_indata1 = self.elf_file.get_symbol("InData1")
         symb_indata2 = self.elf_file.get_symbol("InData2")
