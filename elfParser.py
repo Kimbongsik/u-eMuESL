@@ -8,6 +8,7 @@ class ElfParser:
         self.elf_file_name = elf_file
         self.functions = {}
         self.func_sort = {}
+        self.ram_start_addr = 0
         self.setup()
     
     def setup(self):
@@ -23,8 +24,11 @@ class ElfParser:
             pass
         self.func_sort = dict(sorted(self.functions.items(), key = lambda x : x[1]))
 
-    def get_start_addr(self):
-        return self.func_sort.get('_init')
+    def get_start_addr(self,e_sec):
+        return e_sec[1][1]
+
+    # def get_start_addr(self):
+    #     return self.func_sort.get('_init')
     
     def get_func_address(self, func_name):
         try:
@@ -50,14 +54,14 @@ class ElfParser:
     def get_output_symbol_data(self):
         symb_out = self.elf_file.get_symbol("OutData")
         symb_len = self.elf_file.get_symbol("length")
+        symb_stack = self.elf_file.get_symbol("_stack")
         out_addr = symb_out.value
         len_addr = symb_len.value
-
-        return out_addr, len_addr
+        stack_addr = symb_stack.value
+        return out_addr, len_addr, stack_addr
     
     def get_indata_arr(self):
         indata_arr=[]
-        indata = []
         symb_indata = self.elf_file.get_symbol("InData")
         symb_indata1 = self.elf_file.get_symbol("InData1")
         symb_indata2 = self.elf_file.get_symbol("InData2")
@@ -74,8 +78,12 @@ class ElfParser:
 
     def section_data_list(self):
         sections = []
-        
+        tmp_ram = []
+        tmp_flash = []
+        ram_size = 0
+        flash_size = 0
         cnt = 0
+
         for section in self.elf_file.sections:
             section_list = []
             sections.append(section_list)
@@ -84,8 +92,16 @@ class ElfParser:
             sections[cnt].append(section.original_size)
             sections[cnt].append(section.name)
             cnt += 1
+
+            if section.virtual_address != 0 and section.virtual_address != section.offset:
+                ram_size += section.original_size
+                tmp_ram.append(section.virtual_address)
             
-        return sections
+            elif section.virtual_address == section.offset:
+                flash_size += section.original_size
+                tmp_flash.append(section.offset)
+    
+        return sections, tmp_ram, tmp_flash, ram_size, flash_size
 
     def _print_section_data_list(self):
         for section in self.elf_file.sections:

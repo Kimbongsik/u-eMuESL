@@ -1,7 +1,7 @@
 {
     "ins_set" : {
-        "mov" : 1, "movw" : 1, "movt" : 1,	"MOV PC, Rm" : [1, "P"], "movne" : [1, "P"],
-        "add" : 1, "adc" : 1, "adr" : 1, "ADD PC, PC, Rm" : [1, "P"],
+        "mov" : 1, "movw" : 1, "movt" : 1,	"mov pc" : [1, "P"], "movne" : [1, "P"],
+        "add" : 1, "adc" : 1, "adr" : 1, "add pc" : [1, "P"],
         "sub" : 1, "sbc" : 1, "rsb" : 1,
         "mul" : 1, "mla" : 2, "mls" : 2, "smulld" : 1, "umull" : 1, "smlal" : 1, "umlal" : 1,
         "sdiv" : "div_num", "udiv" : "div_num",
@@ -14,7 +14,7 @@
         "ldr" : 2, "ldr PC" : [2 , "P"], "ldrh" : 2, "ldrb" : 2, "ldrsh" : 2, "ldrsb" : 2, "ldrt" : 2, "ldrht" : 2, "ldrbt" : 2, "ldrsht": 2, "ldrsbt" : 2, "ldrd" : [1 , "N"], "ldm" : [1, "N"], "ldm PC" : [1 , "N" , "P"],
         "str" : 2, "strh" : 2,"strb" : 2,"strsh" : 2,"strsb": 2, "strt" : 2, "strht": 2, "strbt": 2, "strsht": 2, "strsbt": 2, "strd": [1 , "N"], "STM": 2,
         "push" : [1 , "N"],
-        "pop" : [1 , "N"], "pop PC" : [1 , "N", "P"],
+        "pop" : [1 , "N"], "pop pc" : [1 , "N", "P"],
         "ldrex" : 2, "ldrexh" : 2 , "ldrexb" : 2 , "strex" : 2 , "strexh" : 2 , "strexb" : 2 , "clrex" : 1,
         "b<cc> <label>" : [1 , [1 , "P"]], "b" : [1 , "P"], "bl" : [1 , "P"], "bx" : [1 , "P"], "blx" : [1 , "P"], "cbz" : [1 , [1 , "P"]], "cbnz" : [1 , [1 , "P"]], "tbb" : [2 , "P"], "tbh" : [2 , "P"],
         "bxne" : [1, "P"], "beq" : [1, "P"],
@@ -29,7 +29,8 @@
         "value" : {
             "P" : 1,
             "N" : 2,
-            "B" : 2
+            "B" : 2,
+            "div_num" : 3
         }
 }
 

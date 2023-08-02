@@ -21,7 +21,7 @@ class ARM:
         self.B = b
         self.N = 0
     
-    def cycle_cal(self, ins, modified_ins, op_str):
+    def cycle_cal(self, ins, op_str):
         with open(self.json_file) as j_f:
             arch = json.load(j_f)
 
