@@ -8,7 +8,6 @@ class ElfParser:
         self.elf_file_name = elf_file
         self.functions = {}
         self.func_sort = {}
-        self.ram_start_addr = 0
         self.setup()
     
     def setup(self):
@@ -19,17 +18,26 @@ class ElfParser:
                 while tmp in self.functions:
                     c += 1
                     tmp = f.name + str(c)
+
                 self.functions[tmp] = f.address
+
         except:
             pass
+
         self.func_sort = dict(sorted(self.functions.items(), key = lambda x : x[1]))
 
-    def get_start_addr(self,e_sec):
-        return e_sec[1][1]
-
-    # def get_start_addr(self):
-    #     return self.func_sort.get('_init')
+    def check_mode(self):
+        if self.elf_file_name == "./source/toy_ex_mod_add":
+            MODE = 4
+        elif self.elf_file_name == "./source/toy_ex_mod_add_m4":
+            MODE = 2
+        else:
+            exit()
+        return MODE
     
+    def get_start_addr(self):
+        return self.get_func_address('_init') + (self.check_mode() == 2)
+
     def get_func_address(self, func_name):
         try:
             return self.func_sort.get(func_name)
@@ -130,10 +138,4 @@ class ElfParser:
         return list_input
 
 
-
-
-
-
-# e =ElfParser("./source/toy_ex_mod_add")
-# print(e.get_symbol())
 

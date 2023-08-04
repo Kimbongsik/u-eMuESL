@@ -78,7 +78,6 @@ def print_mem(uc, modify_mem, op_str):
     modified_mem_addr = reg_val
 
 def write_log(uc, address, user_data):
-    pass
     global mem_modified
     temp = sys.stdout
     addr = int((address-START_ADDRESS)/MODE)

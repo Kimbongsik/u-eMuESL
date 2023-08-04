@@ -6,16 +6,16 @@ from logger import *
 import os
 
 def auto_set(uc):
-    #mapping Flash memory
     PAGE_SIZE = 4*1024
 
-    if flash_size // (PAGE_SIZE) > 0:
-        uc.mem_map(START_ADDRESS, ((flash_size // (PAGE_SIZE)) * (PAGE_SIZE)) + (PAGE_SIZE))
+    #mapping Flash memory
+    if flash_size > PAGE_SIZE:
+        uc.mem_map(START_ADDRESS // (PAGE_SIZE) * (PAGE_SIZE), ((flash_size // (PAGE_SIZE)) * (PAGE_SIZE)) + (PAGE_SIZE))
     else:
-        uc.mem_map(START_ADDRESS, (PAGE_SIZE))
+        uc.mem_map(START_ADDRESS // (PAGE_SIZE) * (PAGE_SIZE), (PAGE_SIZE))
 
     #mapping RAM memory
-    if stack_addr - ram_addr[0] // (PAGE_SIZE) > 0:
+    if stack_addr - ram_addr[0] > PAGE_SIZE:
         uc.mem_map((ram_addr[0]) // (PAGE_SIZE) * (PAGE_SIZE), (stack_addr - ram_addr[0] // (PAGE_SIZE)) * (PAGE_SIZE) + (PAGE_SIZE))
     else:
         uc.mem_map((ram_addr[0]) // (PAGE_SIZE) * (PAGE_SIZE), (PAGE_SIZE))
@@ -195,9 +195,6 @@ def run():
             mu = Uc(UC_ARCH_ARM, UC_MODE_THUMB)
         else: # MODE == 4 (arm mode)
             mu = Uc(UC_ARCH_ARM, UC_MODE_ARM)
-
-
-        #mu = Uc(UC_ARCH_ARM, UC_MODE_THUMB)
 
         # map 4MB memory for emulating
         auto_set(mu)

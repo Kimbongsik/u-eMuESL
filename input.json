@@ -1,6 +1,6 @@
 {
     "files" : {
-        "elf_file" : "./source/toy_ex_mod_add_m4",
+        "elf_file" : "./source/toy_ex_mod_add",
         "log_file_name" : "arm"
     },
 
