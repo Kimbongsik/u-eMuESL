@@ -40,6 +40,9 @@ e_section_list, ram_addr, flash_addr, ram_size, flash_size = e.section_data_list
 
 # mapping address
 START_ADDRESS = e.get_start_addr()
+# code to emulate
+CODE = e.get_code(START_ADDRESS)
+REF_CODE = e.get_code(START_ADDRESS - (MODE == 2))
 
 refsIdx = 1
 reffIdx = 0
@@ -50,12 +53,11 @@ f_list = list(e.func_sort.items())
 func_list = e.check_list(f_list)
 
 exit_addr = e.get_func_address('exit')
-exit_addr_real = e.get_func_address('_exit')
-emu_ADDRESS = e.get_func_address('main')# start emulating at main function
+exit_addr_real = e.get_func_address('_exit') 
+emu_ADDRESS = e.get_func_address('main')
 main_len = e.get_main_len()
 
-# code to emulate
-CODE = e.get_code(START_ADDRESS)
+
 
 # input & output data
 OutData_addr, length_addr, stack_addr = e.get_output_symbol_data()

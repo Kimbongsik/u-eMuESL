@@ -19,7 +19,7 @@ class ElfParser:
                     c += 1
                     tmp = f.name + str(c)
 
-                self.functions[tmp] = f.address
+                self.functions[tmp] = f.address #thumb mode의 경우 홀수 주소
 
         except:
             pass
@@ -36,7 +36,7 @@ class ElfParser:
         return MODE
     
     def get_start_addr(self):
-        return self.get_func_address('_init') + (self.check_mode() == 2)
+        return self.get_func_address('_init')
 
     def get_func_address(self, func_name):
         try:

@@ -73,6 +73,7 @@ def make_refer(input, addr):
         mc = Cs(CS_ARCH_ARM, CS_MODE_THUMB)
     else: # MODE == 4
         mc = Cs(CS_ARCH_ARM, CS_MODE_ARM)
+
     mc.syntax = None
     mc.detail = True
     virtual_addr = 0
@@ -139,7 +140,7 @@ def make_refer(input, addr):
         copy_mne.append(line)
         copy_mne[make_ins_inIdx].append("NONE")
         make_ins_inIdx += 1
-        retaddr = START_ADDRESS + make_ins_inIdx * MODE
+        retaddr = (START_ADDRESS - (MODE == 2)) + make_ins_inIdx * MODE
         with open(elf_file, "rb") as f:
             f.seek(retaddr,0)
             fcode = f.read()
@@ -157,20 +158,16 @@ def code_hook(uc, address, size, user_data):
 
     sys.stdout = temp
 
-    if MODE == 2: # (thumb mode)
-        if address == exit_addr_real - 1:
-            uc.emu_stop()
-    else: # MODE == 4 (arm mode)
-        if address == exit_addr_real:
-            uc.emu_stop()
+    if address == exit_addr_real - (MODE == 2):
+        uc.emu_stop()
 
 def run():
 
     if os.path.isfile('reference.txt'):
         os.remove('reference.txt')
 
-    refcod = CODE
-    refaddr = START_ADDRESS
+    refcod = REF_CODE
+    refaddr = START_ADDRESS - (MODE == 2)
 
     while len(copy_mne)/int(len(CODE)/MODE) < 1:
         refcod, refaddr = make_refer(refcod,refaddr)

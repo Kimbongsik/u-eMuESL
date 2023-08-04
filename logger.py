@@ -103,3 +103,4 @@ def write_log(uc, address, user_data):
         print_mem(uc, modify_mem, op_str)
         mem_modified = True
     sys.stdout = temp
+
