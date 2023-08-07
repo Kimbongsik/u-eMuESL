@@ -19,7 +19,7 @@ class ElfParser:
                     c += 1
                     tmp = f.name + str(c)
 
-                self.functions[tmp] = f.address #thumb mode의 경우 홀수 주소
+                self.functions[tmp] = f.address
 
         except:
             pass
@@ -27,12 +27,10 @@ class ElfParser:
         self.func_sort = dict(sorted(self.functions.items(), key = lambda x : x[1]))
 
     def check_mode(self):
-        if self.elf_file_name == "./source/toy_ex_mod_add":
-            MODE = 4
-        elif self.elf_file_name == "./source/toy_ex_mod_add_m4":
+        if self.get_start_addr() %2 == 1:
             MODE = 2
         else:
-            exit()
+            MODE = 4
         return MODE
     
     def get_start_addr(self):

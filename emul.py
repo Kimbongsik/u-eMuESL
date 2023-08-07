@@ -50,20 +50,20 @@ def get_output_data(uc,out_addr,len_addr):
         output.append(cvt_output)
     return output
 
-def _make_refer(input, addr):
-    f = open ('reference.txt', 'a')
-    mc = Cs(CS_ARCH_ARM, CS_MODE_ARM)
-    mc.syntax = None
-    mc.detail = True
+# def _make_refer(input, addr):
+#     f = open ('reference.txt', 'a')
+#     mc = Cs(CS_ARCH_ARM, CS_MODE_ARM)
+#     mc.syntax = None
+#     mc.detail = True
     
-    for insn in mc.disasm(input, addr):
-        #print("%x, %x, %x" % (insn.address,e_sec[refsIdx][1],func_list[reffIdx][1]))
-        if insn.address in e_sec:
-            f.write("\nsection\t\t : %s\n" % e_sec[refsIdx][3])
-        f.write("[0x%x]: " %insn.address)
-        for j in range(len(insn.bytes)):
-            f.write("\\x%x" %insn.bytes[j])
-        f.write("\n")
+#     for insn in mc.disasm(input, addr):
+#         #print("%x, %x, %x" % (insn.address,e_sec[refsIdx][1],func_list[reffIdx][1]))
+#         if insn.address in e_sec:
+#             f.write("\nsection\t\t : %s\n" % e_sec[refsIdx][3])
+#         f.write("[0x%x]: " %insn.address)
+#         for j in range(len(insn.bytes)):
+#             f.write("\\x%x" %insn.bytes[j])
+#         f.write("\n")
             
 def make_refer(input, addr):
     global make_ins_inIdx, make_ins_cnt, refsIdx, reffIdx, MODE
@@ -84,19 +84,18 @@ def make_refer(input, addr):
 
     for insn in mc.disasm(input, addr):
         #print("%x, %x, %x" % (insn.address,e_sec[refsIdx][1],func_list[reffIdx][1]))
-        for i in range(len(e_sec)):
-            for j in range(len(e_sec[i])):
-                if e_sec[i][1] == insn.address:
-                    f.write("\nsection\t\t : %s\n" % e_sec[refsIdx][3])
-                    refsIdx += 1
-                    if refsIdx == len(e_sec):
-                        refsIdx = len(e_sec)-1  
-                    if e_sec[i][0] != 0:
-                        f.write("REAL ADDRESS : %s\n\n" % hex(e_sec[refsIdx][0]))
-                        virtual_addr = e_sec[refsIdx][0]
-                        sec_name = e_sec[refsIdx][3]
+        if e_sec[refsIdx][1] -2  == insn.address or e_sec[refsIdx][1] == insn.address:
+            f.write("\nsection\t\t : %s\n" % e_sec[refsIdx][3])
+            if e_sec[refsIdx][0] != 0:
+                f.write("REAL ADDRESS : %s\n\n" % hex(e_sec[refsIdx][0]))
+                virtual_addr = e_sec[refsIdx][0]
+                sec_name = e_sec[refsIdx][3]
+                
+            refsIdx += 1
+            if refsIdx == len(e_sec):
+                refsIdx = len(e_sec)-1   
                      
-        if func_list[reffIdx][1] == insn.address:
+        if func_list[reffIdx][1] == insn.address + (MODE == 2):
             f.write("\nfunction\t : %s\n\n" % (func_list[reffIdx][0]))
             reffIdx += 1
             if reffIdx == len(func_list):
@@ -171,6 +170,8 @@ def run():
 
     while len(copy_mne)/int(len(CODE)/MODE) < 1:
         refcod, refaddr = make_refer(refcod,refaddr)
+        print("refcod: ", refcod)
+        print("refaddr: ", refaddr)
 
     ptr = 0
     addr = START_ADDRESS
