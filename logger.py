@@ -3,9 +3,28 @@ from unicorn import *
 from unicorn.arm_const import *
 from capstone import *
 from ccycle import *
+import pandas as pd
+import csv
 
-# print all register
-def print_all_reg(uc):
+
+# Logger 변수
+ctr = 0
+mem_modified = False
+modified_mem_addr = 0
+LogReg_header =  ['ctr','Address','Opcode', 'Operands',
+        'bR0','bR1','bR2','bR3','bR4','bR5','bR6','bR7','bR8','bR9','bR10','bFP','bIP','bSP','bLR','bPC','bCPSR',
+        'aR0','aR1','aR2','aR3','aR4','aR5','aR6','aR7','aR8','aR9','aR10','aFP','aIP','aSP','aLR','aPC','aCPSR']
+log_matrix = [LogReg_header]
+
+# 로그 파일 생성
+try:
+    filename = "./log/" + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + " " + input_data["files"]["log_file_name"] + ".csv"
+except:
+    filename = "./log/" + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + ".csv"
+
+
+# 모든 레지스터 값 반환
+def ret_all_reg(uc):
     r0 = uc.reg_read(UC_ARM_REG_R0) 
     r1 = uc.reg_read(UC_ARM_REG_R1)
     r2 = uc.reg_read(UC_ARM_REG_R2)
@@ -24,33 +43,17 @@ def print_all_reg(uc):
     pc = uc.reg_read(UC_ARM_REG_PC)
     cpsr = uc.reg_read(UC_ARM_REG_CPSR)
     
-    print("R0 = 0x%x" %r0, end = ', ')
-    print("R1 = 0x%x" %r1, end = ', ')
-    print("R2 = 0x%x" %r2, end = ', ')
-    print("R3 = 0x%x" %r3, end = ', ')
-    print("R4 = 0x%x" %r4, end = ', ')
-    print("R5 = 0x%x" %r5, end = ', ')
-    print("R6 = 0x%x" %r6, end = ', ')
-    print("R7 = 0x%x" %r7, end = ', ')
-    print("R8 = 0x%x" %r8, end = ', ')
-    print("R9 = 0x%x" %r9, end = ', ')
-    print("R10 = 0x%x" %r10, end = ', ')
-    print("FP = 0x%x" %fp, end = ', ')
-    print("IP = 0x%x" %ip, end = ', ')
-    print("SP = 0x%x" %sp, end = ', ')
-    print("LR = 0x%x" %lr, end = ', ')
-    print("PC = 0x%x" %pc, end = ', ')
-    print("CPSR = 0x%x" %cpsr, end = ' ')
+    return [r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, sp, lr, pc, cpsr]
 
+# 명령어(op code, op string) 반환
 def print_instruction(addr):
     for i in range(len(instructions)):
         for j in range(3):
             if instructions[i][0] == addr:
-                print("\t%s\t%s" %(instructions[i][1], instructions[i][2]), end=' ')
-                modified_mem = instructions[i][2].find('[')
-                return modified_mem, i, instructions[i][2]
-    
-def print_mem(uc, modify_mem, op_str):
+                return instructions[i][1], instructions[i][2]
+
+# 변경된 메모리 데이터 출력(not use)
+def _print_mem(uc, modify_mem, op_str):
     global modified_mem_addr
     ins = ''
 
@@ -77,30 +80,28 @@ def print_mem(uc, modify_mem, op_str):
     print()
     modified_mem_addr = reg_val
 
-def write_log(uc, address, user_data):
-    global mem_modified
-    temp = sys.stdout
-    addr = int((address-START_ADDRESS)/MODE)
+# 레지스터 로그 파일 생성
+def write_log_regs(uc, address, user_data):
+    global ctr
 
-    if mem_modified == True:
-        print("/ memory after modification: ", end ='')
-        mem_val = uc.mem_read(modified_mem_addr, MODE)
-        for i in range(len(mem_val)):
-            print("\\x%x" %mem_val[i], end = "")
-        print()
-        mem_modified = False
+    b_regs = ret_all_reg(uc)
+    op_code, op_str = print_instruction(address)
 
-    print("[" + str(hex(address)) + "]", end=' ')
-    print("instruction :", end=' ')
-    modify_mem, addr_idx, op_str = print_instruction(address)
-    print("/ register data :", end=' ')
-    print_all_reg(uc)
-    print("/ modified register : ", end ='')
-    print(user_data[addr][1:], end = '')
-    print("/ clock count : ", end ='')
-    clock.cycle_cal(instructions[addr_idx][1], op_str)
-    if modify_mem != -1:
-        print_mem(uc, modify_mem, op_str)
-        mem_modified = True
-    sys.stdout = temp
+    b_regs.insert(0,ctr)
+    b_regs.insert(1, hex(address))
+    b_regs.insert(2,op_code)
+    b_regs.insert(3,op_str)
 
+    log_matrix.append(b_regs)
+
+    
+    if ctr >= 1 :
+        for i in range(4, len(b_regs)):
+            log_matrix[ctr].append(b_regs[i])
+
+    ctr += 1
+
+    if address == exit_addr_real - (MODE == 2):
+        with open(filename, 'w', newline='') as file:
+            write = csv.writer(file)
+            write.writerows(log_matrix)

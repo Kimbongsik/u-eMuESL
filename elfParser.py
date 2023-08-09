@@ -20,12 +20,12 @@ class ElfParser:
                     tmp = f.name + str(c)
 
                 self.functions[tmp] = f.address
-
         except:
             pass
 
         self.func_sort = dict(sorted(self.functions.items(), key = lambda x : x[1]))
 
+    # 모드(ARM mode와 Thumb mode 확인)
     def check_mode(self):
         if self.get_start_addr() %2 == 1:
             MODE = 2
@@ -33,9 +33,11 @@ class ElfParser:
             MODE = 4
         return MODE
     
+    # Emulation 시작 주소 추출
     def get_start_addr(self):
         return self.get_func_address('_init')
 
+    # 함수 시작 주소 추출
     def get_func_address(self, func_name):
         try:
             return self.func_sort.get(func_name)
@@ -43,9 +45,11 @@ class ElfParser:
             print("Err: func name doesn't exist in the file")
             exit(1)
     
+    # main 함수 길이 추출
     def get_main_len(self):
         return self.elf_file.get_symbol("main").size
     
+    # 에뮬레이션을 수행할 코드 추출
     def get_code(self, address):
         try:
             with open(self.elf_file_name, "rb") as f:
@@ -57,6 +61,7 @@ class ElfParser:
             exit(1)
         return code
     
+    # 프로그램 데이터(OutData, length, stack) 심볼 추출
     def get_output_symbol_data(self):
         symb_out = self.elf_file.get_symbol("OutData")
         symb_len = self.elf_file.get_symbol("length")
@@ -66,6 +71,7 @@ class ElfParser:
         stack_addr = symb_stack.value
         return out_addr, len_addr, stack_addr
     
+    # 프로그램 입력 데이터(InData 배열) 추출
     def get_indata_arr(self):
         indata_arr=[]
         symb_indata = self.elf_file.get_symbol("InData")
@@ -82,6 +88,7 @@ class ElfParser:
         indata_arr.append(symb_indata5.value) # 주소값
         return indata_arr
 
+    # 섹션 정보(RAM 주소, 파일 오프셋, 섹션 크기, 섹션명) 리스트로 추출
     def section_data_list(self):
         sections = []
         tmp_ram = []

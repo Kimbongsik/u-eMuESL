@@ -5,25 +5,28 @@ from setdata import *
 from logger import *
 import os
 
+#레지스터 초기화 및 메모리 자동 매핑
 def auto_set(uc):
     PAGE_SIZE = 4*1024
 
-    #mapping Flash memory
+    #Flash memory 영역 mapping
     if flash_size > PAGE_SIZE:
         uc.mem_map(START_ADDRESS // (PAGE_SIZE) * (PAGE_SIZE), ((flash_size // (PAGE_SIZE)) * (PAGE_SIZE)) + (PAGE_SIZE))
     else:
         uc.mem_map(START_ADDRESS // (PAGE_SIZE) * (PAGE_SIZE), (PAGE_SIZE))
 
-    #mapping RAM memory
+    #Ram memory 영역 mapping
     if stack_addr - ram_addr[0] > PAGE_SIZE:
         uc.mem_map((ram_addr[0]) // (PAGE_SIZE) * (PAGE_SIZE), (stack_addr - ram_addr[0] // (PAGE_SIZE)) * (PAGE_SIZE) + (PAGE_SIZE))
     else:
         uc.mem_map((ram_addr[0]) // (PAGE_SIZE) * (PAGE_SIZE), (PAGE_SIZE))
 
+    #레지스터 초기화
     uc.reg_write(UC_ARM_REG_SP, stack_addr)
     uc.reg_write(UC_ARM_REG_FP, stack_addr)
     uc.reg_write(UC_ARM_REG_LR, exit_addr)
 
+#메모리에 데이터 업로드
 def upload(uc):
     for i in range(len(e_sec)):
         # read file from start address to eof
@@ -34,6 +37,7 @@ def upload(uc):
         if e_sec[i][0] != 0:
             uc.mem_write(e_sec[i][0],cod)
 
+#프로그램 input 데이터
 def get_input_data(indata_arr):
     for i in range(len(indata_arr)):
         print("InData%d address is " %(i),end = "")
@@ -50,21 +54,7 @@ def get_output_data(uc,out_addr,len_addr):
         output.append(cvt_output)
     return output
 
-# def _make_refer(input, addr):
-#     f = open ('reference.txt', 'a')
-#     mc = Cs(CS_ARCH_ARM, CS_MODE_ARM)
-#     mc.syntax = None
-#     mc.detail = True
-    
-#     for insn in mc.disasm(input, addr):
-#         #print("%x, %x, %x" % (insn.address,e_sec[refsIdx][1],func_list[reffIdx][1]))
-#         if insn.address in e_sec:
-#             f.write("\nsection\t\t : %s\n" % e_sec[refsIdx][3])
-#         f.write("[0x%x]: " %insn.address)
-#         for j in range(len(insn.bytes)):
-#             f.write("\\x%x" %insn.bytes[j])
-#         f.write("\n")
-            
+#referenc.txt 파일 생성
 def make_refer(input, addr):
     global make_ins_inIdx, make_ins_cnt, refsIdx, reffIdx, MODE
 
@@ -150,12 +140,12 @@ def make_refer(input, addr):
 
 
 def code_hook(uc, address, size, user_data):
-    temp = sys.stdout
-    sys.stdout = open(filename, 'a') # open log file
+    # temp = sys.stdout
+    # sys.stdout = open(filename, 'a') # open log file
     
-    write_log(uc, address, user_data)
+    write_log_regs(uc, address, user_data)
 
-    sys.stdout = temp
+    # sys.stdout = temp
 
     if address == exit_addr_real - (MODE == 2):
         uc.emu_stop()
@@ -170,20 +160,6 @@ def run():
 
     while len(copy_mne)/int(len(CODE)/MODE) < 1:
         refcod, refaddr = make_refer(refcod,refaddr)
-        print("refcod: ", refcod)
-        print("refaddr: ", refaddr)
-
-    ptr = 0
-    addr = START_ADDRESS
-
-    # while(addr < 101412):
-    #     input = CODE[ptr : ptr + MODE]
-    #     addr = addr + MODE
-
-    #     start = time.time()
-    #     _make_refer(input, addr)
-    #     print("function time: ", time.time() - start)
-    #     ptr += MODE
     
     print("Emulating the code..")
 
@@ -197,11 +173,12 @@ def run():
         # map 4MB memory for emulating
         auto_set(mu)
 
+        # 섹션 데이터 메모리에 업로드
         upload(mu)
 
         # add callback function
-        mu.hook_add(UC_HOOK_CODE, code_hook, copy_mne, begin= START_ADDRESS, end= START_ADDRESS + len(CODE))
-        
+        mu.hook_add(UC_HOOK_CODE, code_hook, None, begin= START_ADDRESS, end= START_ADDRESS + len(CODE))
+
         # add address should be same as main function length
         mu.emu_start(emu_ADDRESS, emu_ADDRESS + main_len)
 
