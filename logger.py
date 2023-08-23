@@ -1,11 +1,12 @@
-from setdata import *
 from unicorn import *
 from unicorn.arm_const import *
 from capstone import *
-from ccycle import *
+from config import *
+from emul import *
+from setEmulData import *
 import pandas as pd
+import datetime
 import csv
-
 
 # Logger 변수
 ctr = 0
@@ -15,14 +16,17 @@ LogReg_header =  ['ctr','Address','Opcode', 'Operands',
         'bR0','bR1','bR2','bR3','bR4','bR5','bR6','bR7','bR8','bR9','bR10','bFP','bIP','bSP','bLR','bPC','bCPSR',
         'aR0','aR1','aR2','aR3','aR4','aR5','aR6','aR7','aR8','aR9','aR10','aFP','aIP','aSP','aLR','aPC','aCPSR']
 log_matrix = [LogReg_header]
+log_file = ""
 
 # 로그 파일 생성
-try:
-    filename = "./log/" + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + " " + input_data["files"]["log_file_name"] + ".csv"
-except:
-    filename = "./log/" + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + ".csv"
+def make_log_file(i):
+    global log_file
 
-
+    if i == 0:
+        log_file = "./log/" + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + " " + log_file_name + ".csv"
+    elif i == 1:
+        log_file = "./log/" + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + " " + log_file_name + "(Fault Log).csv"
+    
 # 모든 레지스터 값 반환
 def ret_all_reg(uc):
     r0 = uc.reg_read(UC_ARM_REG_R0) 
@@ -52,37 +56,9 @@ def print_instruction(addr):
             if instructions[i][0] == addr:
                 return instructions[i][1], instructions[i][2]
 
-# 변경된 메모리 데이터 출력(not use)
-def _print_mem(uc, modify_mem, op_str):
-    global modified_mem_addr
-    ins = ''
-
-    for i in range(modify_mem + 1, len(op_str)):
-        if op_str[i] == ']' :
-            break
-        else:
-            ins += op_str[i]
-    if ins.find(',') != -1 :
-        ins_list = ins.split(',')
-        reg = ins_list[0]
-        val = ins_list[1][2:]
-        reg_val = eval('uc.reg_read(UC_ARM_REG_' + reg.upper() +')') + int(val, 16)
-        mem_val = uc.mem_read(reg_val, MODE)
-    else:
-        reg_val = eval('uc.reg_read(UC_ARM_REG_' + ins.upper() +')')
-        mem_val = uc.mem_read(reg_val, MODE)
-    
-    print("modified address: [" , hex(reg_val), "]")
-    
-    print("/ memory before modification: ", end ='')
-    for j in range(len(mem_val)):
-        print("\\x%x" %mem_val[j], end = "")
-    print()
-    modified_mem_addr = reg_val
-
 # 레지스터 로그 파일 생성
-def write_log_regs(uc, address, user_data):
-    global ctr
+def write_log_regs(uc, address, scene_data):
+    global ctr, log_file
 
     b_regs = ret_all_reg(uc)
     op_code, op_str = print_instruction(address)
@@ -93,7 +69,6 @@ def write_log_regs(uc, address, user_data):
     b_regs.insert(3,op_str)
 
     log_matrix.append(b_regs)
-
     
     if ctr >= 1 :
         for i in range(4, len(b_regs)):
@@ -102,6 +77,10 @@ def write_log_regs(uc, address, user_data):
     ctr += 1
 
     if address == exit_addr_real - (MODE == 2):
-        with open(filename, 'w', newline='') as file:
+        with open(log_file, 'w', newline='') as file:
             write = csv.writer(file)
             write.writerows(log_matrix)
+
+        log_matrix.clear()
+        log_matrix.append(LogReg_header)
+        ctr = 0

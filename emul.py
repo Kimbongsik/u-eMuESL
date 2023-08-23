@@ -1,8 +1,11 @@
 from unicorn import *
 from capstone import *
 from unicorn.arm_const import *
-from setdata import *
-from logger import *
+from elfParser import *
+from setEmulData import *
+from logger import ctr, write_log_regs, make_log_file, log_matrix, LogReg_header
+from scenario import *
+from config import * 
 import os
 
 #레지스터 초기화 및 메모리 자동 매핑
@@ -11,13 +14,13 @@ def auto_set(uc):
 
     #Flash memory 영역 mapping
     if flash_size > PAGE_SIZE:
-        uc.mem_map(START_ADDRESS // (PAGE_SIZE) * (PAGE_SIZE), ((flash_size // (PAGE_SIZE)) * (PAGE_SIZE)) + (PAGE_SIZE))
+        uc.mem_map(START_ADDRESS // (PAGE_SIZE) * (PAGE_SIZE), (flash_size // (PAGE_SIZE) + 1) * (PAGE_SIZE))
     else:
         uc.mem_map(START_ADDRESS // (PAGE_SIZE) * (PAGE_SIZE), (PAGE_SIZE))
 
     #Ram memory 영역 mapping
     if stack_addr - ram_addr[0] > PAGE_SIZE:
-        uc.mem_map((ram_addr[0]) // (PAGE_SIZE) * (PAGE_SIZE), (stack_addr - ram_addr[0] // (PAGE_SIZE)) * (PAGE_SIZE) + (PAGE_SIZE))
+        uc.mem_map((ram_addr[0]) // (PAGE_SIZE) * (PAGE_SIZE), (stack_addr - ram_addr[0] // (PAGE_SIZE) + 1) * (PAGE_SIZE))
     else:
         uc.mem_map((ram_addr[0]) // (PAGE_SIZE) * (PAGE_SIZE), (PAGE_SIZE))
 
@@ -138,20 +141,24 @@ def make_refer(input, addr):
     else:
         return 0, addr
 
+# 명령어 당 hooking 시 호출되는 콜백 함수
+def code_hook(uc, address, size, scene_data):
+    if scene_data.Fault_list:
+        for i in range(len(scene_data.Fault_list)):
+            if scene_data.check_nop(i) and int(scene_data.Fault_list[i]['ctr']) == ctr:
+                scene_data.nop(uc)
+            elif scene_data.check_nop(i) == False and int(scene_data.Fault_list[i]['ctr']) == ctr:
+                pass
 
-def code_hook(uc, address, size, user_data):
-    # temp = sys.stdout
-    # sys.stdout = open(filename, 'a') # open log file
-    
-    write_log_regs(uc, address, user_data)
-
-    # sys.stdout = temp
+    write_log_regs(uc, address, scene_data)
 
     if address == exit_addr_real - (MODE == 2):
         uc.emu_stop()
 
+# 프로그램 실행
 def run():
 
+    # reference.txt 파일 생성
     if os.path.isfile('reference.txt'):
         os.remove('reference.txt')
 
@@ -163,32 +170,42 @@ def run():
     
     print("Emulating the code..")
 
+    # 시나리오 객체 생성
+    scene_data = Scenario()
+    
+    # 에뮬레이팅
     try:
-        # initialize Unicorn
-        if MODE == 2: # (thumb mode)
-            mu = Uc(UC_ARCH_ARM, UC_MODE_THUMB)
-        else: # MODE == 4 (arm mode)
-            mu = Uc(UC_ARCH_ARM, UC_MODE_ARM)
+        if scene_data:
+            for i in range(2):
 
-        # map 4MB memory for emulating
-        auto_set(mu)
+                # 로그 파일 생성
+                make_log_file(i)
 
-        # 섹션 데이터 메모리에 업로드
-        upload(mu)
+                # initialize Unicorn
+                if MODE == 2: # (thumb mode)
+                    mu = Uc(UC_ARCH_ARM, UC_MODE_THUMB)
+                else: # MODE == 4 (arm mode)
+                    mu = Uc(UC_ARCH_ARM, UC_MODE_ARM)
 
-        # add callback function
-        mu.hook_add(UC_HOOK_CODE, code_hook, None, begin= START_ADDRESS, end= START_ADDRESS + len(CODE))
+                # 자동 메모리 매핑
+                auto_set(mu)
 
-        # add address should be same as main function length
-        mu.emu_start(emu_ADDRESS, emu_ADDRESS + main_len)
+                # 섹션 데이터 메모리에 업로드
+                upload(mu)
 
-        print(">>> Emulation done.")
+                # 콜백 함수 추가
+                mu.hook_add(UC_HOOK_CODE, code_hook, scene_data, begin= START_ADDRESS, end= START_ADDRESS + len(CODE))
+       
+                # main 함수 길이만큼 에뮬레이션 시작
+                mu.emu_start(emu_ADDRESS, emu_ADDRESS + main_len)
 
-        # print("InData = ", end="")
-        # InData = get_input_data(InData_arr)
-        # OutData = get_output_data(mu,OutData_addr,length_addr)
-        # print("OutData = ", end="")
-        # print(OutData)
+                print(">>> Emulation done.")
+
+                # print("InData = ", end="")
+                # InData = get_input_data(InData_arr)
+                # OutData = get_output_data(mu,OutData_addr,length_addr)
+                # print("OutData = ", end="")
+                # print(OutData)
 
     except UcError as e:
         print("ERROR: %s" % e)
