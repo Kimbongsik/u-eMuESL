@@ -2,7 +2,6 @@ from unicorn import *
 from unicorn.arm_const import *
 from capstone import *
 from config import *
-from emul import *
 from setEmulData import *
 import pandas as pd
 import datetime
@@ -16,20 +15,23 @@ LogReg_header =  ['ctr','Address','Opcode', 'Operands',
         'bR0','bR1','bR2','bR3','bR4','bR5','bR6','bR7','bR8','bR9','bR10','bFP','bIP','bSP','bLR','bPC','bCPSR',
         'aR0','aR1','aR2','aR3','aR4','aR5','aR6','aR7','aR8','aR9','aR10','aFP','aIP','aSP','aLR','aPC','aCPSR']
 log_matrix = [LogReg_header]
+
 log_file = ""
 
 # 로그 파일 생성
 def make_log_file(i):
     global log_file
-
-    if i == 0:
-        log_file = "./log/" + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + " " + log_file_name + ".csv"
-    elif i == 1:
-        log_file = "./log/" + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + " " + log_file_name + "(Fault Log).csv"
+    try:
+        if i == 0:
+            log_file = "./log/" + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + " " + log_file_name + ".csv"
+        elif i == 1:
+            log_file = "./log/" + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + " " + log_file_name + "(Fault Log).csv"
+    except:
+        log_file = "./log/" + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + " " + ".csv"
     
 # 모든 레지스터 값 반환
 def ret_all_reg(uc):
-    r0 = uc.reg_read(UC_ARM_REG_R0) 
+    r0 = uc.reg_read(UC_ARM_REG_R0)
     r1 = uc.reg_read(UC_ARM_REG_R1)
     r2 = uc.reg_read(UC_ARM_REG_R2)
     r3 = uc.reg_read(UC_ARM_REG_R3)
@@ -58,7 +60,7 @@ def print_instruction(addr):
 
 # 레지스터 로그 파일 생성
 def write_log_regs(uc, address, scene_data):
-    global ctr, log_file
+    global ctr, log_file, LOG_MATRIX
 
     b_regs = ret_all_reg(uc)
     op_code, op_str = print_instruction(address)
@@ -75,12 +77,14 @@ def write_log_regs(uc, address, scene_data):
             log_matrix[ctr].append(b_regs[i])
 
     ctr += 1
-
+    
     if address == exit_addr_real - (MODE == 2):
+        LOG_MATRIX.extend(log_matrix.copy())
+
         with open(log_file, 'w', newline='') as file:
             write = csv.writer(file)
             write.writerows(log_matrix)
-
         log_matrix.clear()
         log_matrix.append(LogReg_header)
         ctr = 0
+    

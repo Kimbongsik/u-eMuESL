@@ -5,6 +5,9 @@ from config import *
 e = ElfParser(elf_file)
 MODE = e.check_mode()
 
+# 오류 주입 시나리오 실행 시 로그 백업 데이터 프레임
+LOG_MATRIX = []
+
 # get section data
 e_section_list, ram_addr, flash_addr, ram_size, flash_size = e.section_data_list()
 

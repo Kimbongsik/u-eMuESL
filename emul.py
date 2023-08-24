@@ -3,7 +3,7 @@ from capstone import *
 from unicorn.arm_const import *
 from elfParser import *
 from setEmulData import *
-from logger import ctr, write_log_regs, make_log_file, log_matrix, LogReg_header
+from logger import write_log_regs, make_log_file
 from scenario import *
 from config import * 
 import os
@@ -141,15 +141,19 @@ def make_refer(input, addr):
     else:
         return 0, addr
 
+# 오류 주입 시나리오 실행을 위한 콜백 함수
+def scene_hook(uc, address, size, scene_data):
+    if scene_data.Fault_list and LOG_MATRIX:
+        for i in range(len(scene_data.Fault_list)): 
+            if hex(address) == LOG_MATRIX[int(scene_data.Fault_list[i]['ctr']) + 1][1]:
+                if scene_data.check_nop(i):
+                    scene_data.nop(uc)
+                else:
+                    pass
+
 # 명령어 당 hooking 시 호출되는 콜백 함수
 def code_hook(uc, address, size, scene_data):
-    if scene_data.Fault_list:
-        for i in range(len(scene_data.Fault_list)):
-            if scene_data.check_nop(i) and int(scene_data.Fault_list[i]['ctr']) == ctr:
-                scene_data.nop(uc)
-            elif scene_data.check_nop(i) == False and int(scene_data.Fault_list[i]['ctr']) == ctr:
-                pass
-
+    
     write_log_regs(uc, address, scene_data)
 
     if address == exit_addr_real - (MODE == 2):
@@ -176,37 +180,44 @@ def run():
     # 에뮬레이팅
     try:
         if scene_data:
-            for i in range(2):
+            cnt = 2
+        else:
+            cnt = 1
+        
+        for i in range(cnt):
+            # 로그 파일 생성
+            make_log_file(i)
 
-                # 로그 파일 생성
-                make_log_file(i)
+            # initialize Unicorn
+            if MODE == 2: # (thumb mode)
+                mu = Uc(UC_ARCH_ARM, UC_MODE_THUMB)
+            else: # MODE == 4 (arm mode)
+                mu = Uc(UC_ARCH_ARM, UC_MODE_ARM)
 
-                # initialize Unicorn
-                if MODE == 2: # (thumb mode)
-                    mu = Uc(UC_ARCH_ARM, UC_MODE_THUMB)
-                else: # MODE == 4 (arm mode)
-                    mu = Uc(UC_ARCH_ARM, UC_MODE_ARM)
+            # 자동 메모리 매핑
+            auto_set(mu)
 
-                # 자동 메모리 매핑
-                auto_set(mu)
+            # 섹션 데이터 메모리에 업로드
+            upload(mu)
 
-                # 섹션 데이터 메모리에 업로드
-                upload(mu)
+            # 오류 주입 시나리오 콜백 함수 추가
+            mu.hook_add(UC_HOOK_CODE, scene_hook, scene_data, begin= START_ADDRESS, end= START_ADDRESS + len(CODE))
+            
+            # 콜백 함수 추가
+            mu.hook_add(UC_HOOK_CODE, code_hook, scene_data, begin= START_ADDRESS, end= START_ADDRESS + len(CODE))
+    
+            # main 함수 길이만큼 에뮬레이션 시작
+            mu.emu_start(emu_ADDRESS, emu_ADDRESS + main_len)
 
-                # 콜백 함수 추가
-                mu.hook_add(UC_HOOK_CODE, code_hook, scene_data, begin= START_ADDRESS, end= START_ADDRESS + len(CODE))
-       
-                # main 함수 길이만큼 에뮬레이션 시작
-                mu.emu_start(emu_ADDRESS, emu_ADDRESS + main_len)
+            print(">>> Emulation done.")
 
-                print(">>> Emulation done.")
-
-                # print("InData = ", end="")
-                # InData = get_input_data(InData_arr)
-                # OutData = get_output_data(mu,OutData_addr,length_addr)
-                # print("OutData = ", end="")
-                # print(OutData)
+            # print("InData = ", end="")
+            # InData = get_input_data(InData_arr)
+            # OutData = get_output_data(mu,OutData_addr,length_addr)
+            # print("OutData = ", end="")
+            # print(OutData)
 
     except UcError as e:
         print("ERROR: %s" % e)
+        
 
