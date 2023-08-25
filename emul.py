@@ -3,7 +3,7 @@ from capstone import *
 from unicorn.arm_const import *
 from elfParser import *
 from setEmulData import *
-from logger import write_log_regs, make_log_file
+from logger import write_log_regs, make_log_file, LOG_MATRIX
 from scenario import *
 from config import * 
 import os
@@ -146,10 +146,10 @@ def scene_hook(uc, address, size, scene_data):
     if scene_data.Fault_list and LOG_MATRIX:
         for i in range(len(scene_data.Fault_list)): 
             if hex(address) == LOG_MATRIX[int(scene_data.Fault_list[i]['ctr']) + 1][1]:
-                if scene_data.check_nop(i):
+                if scene_data.check_nop(i): # NOP 시나리오
                     scene_data.nop(uc)
-                else:
-                    pass
+                else: # 레지스터 수정 시나리오
+                    scene_data.modify_regs(uc, i)
 
 # 명령어 당 hooking 시 호출되는 콜백 함수
 def code_hook(uc, address, size, scene_data):

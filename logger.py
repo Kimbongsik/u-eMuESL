@@ -15,8 +15,11 @@ LogReg_header =  ['ctr','Address','Opcode', 'Operands',
         'bR0','bR1','bR2','bR3','bR4','bR5','bR6','bR7','bR8','bR9','bR10','bFP','bIP','bSP','bLR','bPC','bCPSR',
         'aR0','aR1','aR2','aR3','aR4','aR5','aR6','aR7','aR8','aR9','aR10','aFP','aIP','aSP','aLR','aPC','aCPSR']
 log_matrix = [LogReg_header]
-
 log_file = ""
+
+# 오류 주입 시나리오 실행 시 로그 백업 데이터 프레임
+LOG_MATRIX = []
+
 
 # 로그 파일 생성
 def make_log_file(i):
@@ -79,7 +82,7 @@ def write_log_regs(uc, address, scene_data):
     ctr += 1
     
     if address == exit_addr_real - (MODE == 2):
-        LOG_MATRIX.extend(log_matrix.copy())
+        LOG_MATRIX.extend(log_matrix)
 
         with open(log_file, 'w', newline='') as file:
             write = csv.writer(file)

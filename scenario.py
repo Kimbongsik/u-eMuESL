@@ -33,21 +33,29 @@ class Scenario:
         else:
             return False
 
-    def flip_reg(self, uc, reg):
-        reg_data = uc.reg_read(self.REG[reg])
+    def flip(self, uc, reg):
+        reg_data = uc.reg_read(reg)
 
         if MODE == 4:
-            flipped_reg_data = reg_data ^ 0xFFFFFFFF
+            flipped_reg_data = int(reg_data ^ 0xFFFFFFFF)
         else:
             flipped_reg_data = reg_data ^ 0xFFFF
         
-        uc.reg_write(self.REG[reg], flipped_reg_data)
-
-    def change_reg(self, uc, reg, data):
-        uc.reg_write(self.REG[reg], data)
+        uc.reg_write(reg, flipped_reg_data)
         
     def nop(self, uc):
         pc_data = uc.reg_read(self.REG['pc'])
         uc.reg_write(self.REG['pc'], pc_data + MODE)
+
+    def modify_regs(self, uc, i):
+        for reg in self.Fault_header[2:]:
+            reg_val = self.Fault_list[i][reg]
+
+            if reg_val != 'NaN' and reg_val != 'Flip':
+                uc.reg_write(self.REG[reg], int(reg_val))
+            
+            elif reg_val == 'Flip':
+                self.flip(uc, self.REG[reg])
+
 
 
