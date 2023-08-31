@@ -3,7 +3,7 @@ from capstone import *
 from unicorn.arm_const import *
 from elfParser import *
 from setEmulData import *
-from logger import write_log_regs, make_log_file, LOG_MATRIX
+from logger import *
 from scenario import *
 from config import * 
 import os
@@ -40,24 +40,45 @@ def upload(uc):
         if e_sec[i][0] != 0:
             uc.mem_write(e_sec[i][0],cod)
 
-#프로그램 input 데이터
-def get_input_data(indata_arr):
-    for i in range(len(indata_arr)):
-        print("InData%d address is " %(i),end = "")
-        print(indata_arr[i])
+# 데이터 입력
+def set_input_data(uc, ctr):
+    with open(log_vir_in_name, newline='') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            vir_in_data = row
+    
+    list_vir_in_data = list(map(int,vir_in_data[1:]))
+    
+    addr = vir_in_addr
+    for data in list_vir_in_data:
+        uc.mem_write(addr, data.to_bytes(MODE, byteorder="little"))
+        addr += MODE
 
-def get_output_data(uc,out_addr,len_addr):
-    output = []
-    len_mem = uc.mem_read(len_addr,MODE)
-    cvt_len = int.from_bytes(len_mem, byteorder='little')
-    # change mem to int
-    for i in range(cvt_len):
-        out_mem = uc.mem_read(out_addr+i*MODE,MODE)
-        cvt_output = int.from_bytes(out_mem,byteorder="little")
-        output.append(cvt_output)
-    return output
+# 입출력 파일 생성
+def make_io_data_files(uc):
+    # Log_VirOUT 파일 생성
+    with open(log_folder + "/" + date + ' LogVirOUT.csv', 'w') as file:
+        wr = csv.writer(file)
+        out_data_list = []
+        addr = vir_out_addr
+        for i in range(vir_out_len // MODE):
+            out_data = int.from_bytes(uc.mem_read(addr, MODE), byteorder="little")
+            out_data_list.append(out_data)
+            addr += MODE
+        
+        wr.writerow(out_data_list)
 
-#referenc.txt 파일 생성
+    # Log_VirIN 파일 생성
+    in_data_list = []
+    with open(log_vir_in_name, 'r') as read:
+        rr = csv.reader(read)
+        for line in rr:
+            in_data_list.append(line)
+    with open(log_folder + "/" + date + ' LogVirIN.csv', 'w') as write:
+        wr = csv.writer(write)
+        wr.writerows(in_data_list)
+
+# 레퍼런스 파일 생성
 def make_refer(input, addr):
     global make_ins_inIdx, make_ins_cnt, refsIdx, reffIdx, MODE
 
@@ -99,14 +120,14 @@ def make_refer(input, addr):
             for j in range(len(insn.bytes)):
                 f.write("\\x%x" %insn.bytes[j])
 
-            if virtual_addr in InData_arr:
-                if num == 0:
-                    f.write("  -------------------------------------------------InData\n")
-                else:
-                    f.write("  -------------------------------------------------InData%d\n" %num)
-                num += 1
-            else:
-                f.write("\n")
+            # if virtual_addr in InData_arr:
+            #     if num == 0:
+            #         f.write("  -------------------------------------------------InData\n")
+            #     else:
+            #         f.write("  -------------------------------------------------InData%d\n" %num)
+            #     num += 1
+            # else:
+            #     f.write("\n")
                 
         else:
             f.write("0x%x:\t%s\t%s\n" %(insn.address, insn.mnemonic, insn.op_str))
@@ -143,13 +164,18 @@ def make_refer(input, addr):
 
 # 오류 주입 시나리오 실행을 위한 콜백 함수
 def scene_hook(uc, address, size, scene_data):
-    if scene_data.Fault_list and LOG_MATRIX:
-        for i in range(len(scene_data.Fault_list)): 
-            if hex(address) == LOG_MATRIX[int(scene_data.Fault_list[i]['ctr']) + 1][1]:
-                if scene_data.check_nop(i): # NOP 시나리오
-                    scene_data.nop(uc)
-                else: # 레지스터 수정 시나리오
-                    scene_data.modify_regs(uc, i)
+    try:
+        if scene_data.Fault_list and LOG_MATRIX:
+            for i in range(len(scene_data.Fault_list)): 
+                if hex(address) == LOG_MATRIX[int(scene_data.Fault_list[i]['ctr']) + 1][1]:
+                    if scene_data.check_nop(i): # NOP 시나리오
+                        scene_data.nop(uc)
+                    else: # 레지스터 수정 시나리오
+                        scene_data.modify_regs(uc, i)
+    except:
+        with open(log_file, 'w', newline='') as file:
+            write = csv.writer(file)
+            write.writerows(log_matrix)
 
 # 명령어 당 hooking 시 호출되는 콜백 함수
 def code_hook(uc, address, size, scene_data):
@@ -200,6 +226,9 @@ def run():
             # 섹션 데이터 메모리에 업로드
             upload(mu)
 
+            # LogVirIN.csv -> 프로그램 파일 입력
+            set_input_data(mu, vir_in_addr)
+
             # 오류 주입 시나리오 콜백 함수 추가
             mu.hook_add(UC_HOOK_CODE, scene_hook, scene_data, begin= START_ADDRESS, end= START_ADDRESS + len(CODE))
             
@@ -211,6 +240,8 @@ def run():
 
             print(">>> Emulation done.")
 
+            make_io_data_files(mu)
+            
             # print("InData = ", end="")
             # InData = get_input_data(InData_arr)
             # OutData = get_output_data(mu,OutData_addr,length_addr)

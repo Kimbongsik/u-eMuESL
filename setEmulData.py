@@ -8,6 +8,8 @@ MODE = e.check_mode()
 # get section data
 e_section_list, ram_addr, flash_addr, ram_size, flash_size = e.section_data_list()
 
+stack_addr = e.get_stack_symbol()
+
 # mapping address
 START_ADDRESS = e.get_start_addr()
 # code to emulate
@@ -25,13 +27,15 @@ exit_addr = e.get_func_address('exit')
 exit_addr_real = e.get_func_address('_exit') 
 emu_ADDRESS = e.get_func_address('main')
 main_len = e.get_main_len()
+vir_out_len = e.get_symbol_len('vir_OUT')
+vir_in_len = e.get_symbol_len('vir_IN')
+
+# input & output data
+vir_in_addr, vir_out_addr = e.get_io_symbol_data()
 
 instructions = []
-OutData = []
 copy_mne = []
 make_ins_inIdx = 0
 make_ins_cnt = 0
 
-# input & output data
-OutData_addr, length_addr, stack_addr = e.get_output_symbol_data()
-InData_arr = e.get_indata_arr()
+

@@ -6,6 +6,7 @@ from setEmulData import *
 import pandas as pd
 import datetime
 import csv
+import os
 
 # Logger 변수
 ctr = 0
@@ -16,21 +17,26 @@ LogReg_header =  ['ctr','Address','Opcode', 'Operands',
         'aR0','aR1','aR2','aR3','aR4','aR5','aR6','aR7','aR8','aR9','aR10','aFP','aIP','aSP','aLR','aPC','aCPSR']
 log_matrix = [LogReg_header]
 log_file = ""
+date = datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S")
+log_folder = "./log/" + date
 
+# 로그 폴더(/log/%Y-%m-%d %H_%M_%S) 생성
+os.mkdir(log_folder)
+        
 # 오류 주입 시나리오 실행 시 로그 백업 데이터 프레임
 LOG_MATRIX = []
 
-
 # 로그 파일 생성
 def make_log_file(i):
-    global log_file
+    global log_file, log_folder
+
     try:
         if i == 0:
-            log_file = "./log/" + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + " " + log_file_name + ".csv"
+            log_file = log_folder + "/" + date + " " + log_file_name + ".csv"
         elif i == 1:
-            log_file = "./log/" + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + " " + log_file_name + "(Fault Log).csv"
+            log_file = log_folder + "/" + date + " " + log_file_name + "(Fault Log).csv"
     except:
-        log_file = "./log/" + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + " " + ".csv"
+        log_file = log_folder + "/" + date + ".csv"
     
 # 모든 레지스터 값 반환
 def ret_all_reg(uc):

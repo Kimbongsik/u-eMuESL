@@ -14,10 +14,11 @@ class Scenario:
             "cpsr" : UC_ARM_REG_CPSR}
         self.Fault_list = []
         self.set_scene_data()
-        
+    
+    # CSV 데이터 추출
     def set_scene_data(self):
         try:
-            with open(fault_reg, newline='') as file:
+            with open(fault_reg_name, newline='') as file:
                 reader = csv.reader(file)
                 for row in reader:
                     self.Fault_list.append(dict(zip(self.Fault_header, row)))
@@ -27,12 +28,14 @@ class Scenario:
             print("err: no file(FaultReg.csv)")
             exit(1)
 
+    # NOP 명령 확인
     def check_nop(self, i):
         if self.Fault_list[i]['isNOP'] == 'TRUE':
             return True
         else:
             return False
 
+    # bit flip
     def flip(self, uc, reg):
         reg_data = uc.reg_read(reg)
 
@@ -43,10 +46,12 @@ class Scenario:
         
         uc.reg_write(reg, flipped_reg_data)
         
+    # NOP
     def nop(self, uc):
         pc_data = uc.reg_read(self.REG['pc'])
         uc.reg_write(self.REG['pc'], pc_data + MODE)
 
+    # 레지스터 값 수정
     def modify_regs(self, uc, i):
         for reg in self.Fault_header[2:]:
             reg_val = self.Fault_list[i][reg]
