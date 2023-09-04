@@ -30,14 +30,15 @@ LOG_MATRIX = []
 def make_log_file(i):
     global log_file, log_folder
 
-    try:
-        if i == 0:
-            log_file = log_folder + "/" + date + " " + log_file_name + ".csv"
-        elif i == 1:
-            log_file = log_folder + "/" + date + " " + log_file_name + "(Fault Log).csv"
-    except:
-        log_file = log_folder + "/" + date + ".csv"
-    
+    if i == 0:
+        log_file = log_folder + "/" + date + " " + "LogReg.csv"
+    elif i == 1:
+        log_file = log_folder + "/" + date + " " + "LogReg_Faulty.csv"
+
+# 로그 파일명 반환
+def get_log_file_name():
+    return log_file
+
 # 모든 레지스터 값 반환
 def ret_all_reg(uc):
     r0 = uc.reg_read(UC_ARM_REG_R0)

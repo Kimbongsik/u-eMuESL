@@ -4,6 +4,7 @@ from config import *
 from setEmulData import *
 import csv
 
+# 오류주입 시나리오 실행 클래스
 class Scenario:
     def __init__(self):
         self.Fault_header=['ctr','isNOP','r0','r1','r2','r3','r4','r5','r6','r7','r8','r9','r10','fp','ip','sp','lr','pc','cpsr']
@@ -18,15 +19,14 @@ class Scenario:
     # CSV 데이터 추출
     def set_scene_data(self):
         try:
-            with open(fault_reg_name, newline='') as file:
+            with open(fault_reg_file, newline='') as file:
                 reader = csv.reader(file)
                 for row in reader:
                     self.Fault_list.append(dict(zip(self.Fault_header, row)))
             del self.Fault_list[0]
-        
+
         except:
-            print("err: no file(FaultReg.csv)")
-            exit(1)
+            print("Emul without fault injection")
 
     # NOP 명령 확인
     def check_nop(self, i):
@@ -61,6 +61,3 @@ class Scenario:
             
             elif reg_val == 'Flip':
                 self.flip(uc, self.REG[reg])
-
-
-

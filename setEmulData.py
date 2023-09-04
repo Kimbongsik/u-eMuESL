@@ -34,8 +34,7 @@ vir_in_len = e.get_symbol_len('vir_IN')
 vir_in_addr, vir_out_addr = e.get_io_symbol_data()
 
 instructions = []
-copy_mne = []
-make_ins_inIdx = 0
-make_ins_cnt = 0
 
+insn_cnt = 0
+insn_size = 0
 

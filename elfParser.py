@@ -76,7 +76,6 @@ class ElfParser:
     def get_symbol_len(self, symb):
         return self.elf_file.get_symbol(symb).size
 
-
     # 스택 데이터 추출
     def get_stack_symbol(self):
         symb_stack = self.elf_file.get_symbol("_stack")

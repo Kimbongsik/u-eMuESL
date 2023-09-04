@@ -65,7 +65,6 @@ void main(void){
   if(RcvState == true){
     if(vir_IN[0] == 0x01){ 
       ADD(vir_OUT, vir_IN);
-	  //length = sizeof(OutData)/sizeof(uint32_t);
     }
     if(vir_IN[0] == 0x02){
       MUL(vir_OUT, vir_IN);
