@@ -10,7 +10,7 @@ import os
 
 # 레퍼런스 파일 생성
 def make_refer(input, addr):
-    global insn_cnt, refsIdx, reffIdx, MODE, insn_size
+    global insn_cnt, refsIdx, reffIdx, MODE
 
     f = open ('reference.txt', 'a')
     if MODE == 2:
@@ -24,8 +24,6 @@ def make_refer(input, addr):
     sec_name = ""
 
     for insn in mc.disasm(input, addr):
-        insn_size += insn.size
-
         if e_sec[refsIdx][1] -2  == insn.address or e_sec[refsIdx][1] == insn.address:
             f.write("\nsection\t\t : %s\n" % e_sec[refsIdx][3])
             if e_sec[refsIdx][0] != 0:
@@ -56,13 +54,13 @@ def make_refer(input, addr):
             
         virtual_addr += MODE
 
-        ins_cnt += 1
+        insn_cnt += 1
 
     f.close()
 
     if len(instructions)/int(len(CODE)/MODE) < 1:
-        ins_cnt += 1
-        retaddr = (START_ADDRESS - (MODE == 2)) + ins_cnt * MODE
+        insn_cnt += 1
+        retaddr = (START_ADDRESS - (MODE == 2)) + insn_cnt * MODE
         with open(elf_file, "rb") as f:
             f.seek(retaddr,0)
             fcode = f.read()
@@ -106,7 +104,6 @@ def upload(uc):
 # 입출력 파일 생성
 def make_io_data_files(uc, i):
     # Log_VirOUT 파일 생성
-
     if i == 0:
         with open(log_folder + "/" + date + ' LogVirOUT.csv', 'w') as file:
             wr = csv.writer(file)
@@ -139,8 +136,6 @@ def make_io_data_files(uc, i):
     with open(log_folder + "/" + date + ' LogVirIN.csv', 'w') as write:
         wr = csv.writer(write)
         wr.writerows(in_data_list)
-
-
 
 # CSV -> 입력 데이터 획득
 def get_input_data():
