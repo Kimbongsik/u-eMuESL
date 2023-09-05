@@ -1,12 +1,47 @@
-from setdata import *
 from unicorn import *
 from unicorn.arm_const import *
 from capstone import *
-from ccycle import *
+from config import *
+from setEmulData import *
+import pandas as pd
+import datetime
+import csv
+import os
 
-# print all register
-def print_all_reg(uc):
-    r0 = uc.reg_read(UC_ARM_REG_R0) 
+# Logger 변수
+ctr = 0
+mem_modified = False
+modified_mem_addr = 0
+LogReg_header =  ['ctr','Address','Opcode', 'Operands',
+        'bR0','bR1','bR2','bR3','bR4','bR5','bR6','bR7','bR8','bR9','bR10','bFP','bIP','bSP','bLR','bPC','bCPSR',
+        'aR0','aR1','aR2','aR3','aR4','aR5','aR6','aR7','aR8','aR9','aR10','aFP','aIP','aSP','aLR','aPC','aCPSR']
+log_matrix = [LogReg_header]
+log_file = ""
+date = datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S")
+log_folder = "./log/" + date
+
+# 로그 폴더(/log/%Y-%m-%d %H_%M_%S) 생성
+os.mkdir(log_folder)
+        
+# 오류 주입 시나리오 실행 시 로그 백업 데이터 프레임
+LOG_MATRIX = []
+
+# 로그 파일 생성
+def make_log_file(i):
+    global log_file, log_folder
+
+    if i == 0:
+        log_file = log_folder + "/" + date + " " + "LogReg.csv"
+    elif i == 1:
+        log_file = log_folder + "/" + date + " " + "LogReg_Faulty.csv"
+
+# 로그 파일명 반환
+def get_log_file_name():
+    return log_file
+
+# 모든 레지스터 값 반환
+def ret_all_reg(uc):
+    r0 = uc.reg_read(UC_ARM_REG_R0)
     r1 = uc.reg_read(UC_ARM_REG_R1)
     r2 = uc.reg_read(UC_ARM_REG_R2)
     r3 = uc.reg_read(UC_ARM_REG_R3)
@@ -24,83 +59,42 @@ def print_all_reg(uc):
     pc = uc.reg_read(UC_ARM_REG_PC)
     cpsr = uc.reg_read(UC_ARM_REG_CPSR)
     
-    print("R0 = 0x%x" %r0, end = ', ')
-    print("R1 = 0x%x" %r1, end = ', ')
-    print("R2 = 0x%x" %r2, end = ', ')
-    print("R3 = 0x%x" %r3, end = ', ')
-    print("R4 = 0x%x" %r4, end = ', ')
-    print("R5 = 0x%x" %r5, end = ', ')
-    print("R6 = 0x%x" %r6, end = ', ')
-    print("R7 = 0x%x" %r7, end = ', ')
-    print("R8 = 0x%x" %r8, end = ', ')
-    print("R9 = 0x%x" %r9, end = ', ')
-    print("R10 = 0x%x" %r10, end = ', ')
-    print("FP = 0x%x" %fp, end = ', ')
-    print("IP = 0x%x" %ip, end = ', ')
-    print("SP = 0x%x" %sp, end = ', ')
-    print("LR = 0x%x" %lr, end = ', ')
-    print("PC = 0x%x" %pc, end = ', ')
-    print("CPSR = 0x%x" %cpsr, end = ' ')
+    return [r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, sp, lr, pc, cpsr]
 
+# 명령어(op code, op string) 반환
 def print_instruction(addr):
     for i in range(len(instructions)):
         for j in range(3):
             if instructions[i][0] == addr:
-                print("\t%s\t%s" %(instructions[i][1], instructions[i][2]), end=' ')
-                modified_mem = instructions[i][2].find('[')
-                return modified_mem, i, instructions[i][2]
+                return instructions[i][1], instructions[i][2]
+
+# 레지스터 로그 파일 생성
+def write_log_regs(uc, address, scene_data):
+    global ctr, log_file, LOG_MATRIX
+
+    b_regs = ret_all_reg(uc)
+    op_code, op_str = print_instruction(address)
+
+    b_regs.insert(0,ctr)
+    b_regs.insert(1, hex(address))
+    b_regs.insert(2,op_code)
+    b_regs.insert(3,op_str)
+
+    log_matrix.append(b_regs)
     
-def print_mem(uc, modify_mem, op_str):
-    global modified_mem_addr
-    ins = ''
+    if ctr >= 1 :
+        for i in range(4, len(b_regs)):
+            log_matrix[ctr].append(b_regs[i])
 
-    for i in range(modify_mem + 1, len(op_str)):
-        if op_str[i] == ']' :
-            break
-        else:
-            ins += op_str[i]
-    if ins.find(',') != -1 :
-        ins_list = ins.split(',')
-        reg = ins_list[0]
-        val = ins_list[1][2:]
-        reg_val = eval('uc.reg_read(UC_ARM_REG_' + reg.upper() +')') + int(val, 16)
-        mem_val = uc.mem_read(reg_val, MODE)
-    else:
-        reg_val = eval('uc.reg_read(UC_ARM_REG_' + ins.upper() +')')
-        mem_val = uc.mem_read(reg_val, MODE)
+    ctr += 1
     
-    print("modified address: [" , hex(reg_val), "]")
+    if address == exit_addr_real - (MODE == 2):
+        LOG_MATRIX.extend(log_matrix)
+
+        with open(log_file, 'w', newline='') as file:
+            write = csv.writer(file)
+            write.writerows(log_matrix)
+        log_matrix.clear()
+        log_matrix.append(LogReg_header)
+        ctr = 0
     
-    print("/ memory before modification: ", end ='')
-    for j in range(len(mem_val)):
-        print("\\x%x" %mem_val[j], end = "")
-    print()
-    modified_mem_addr = reg_val
-
-def write_log(uc, address, user_data):
-    global mem_modified
-    temp = sys.stdout
-    addr = int((address-START_ADDRESS)/MODE)
-
-    if mem_modified == True:
-        print("/ memory after modification: ", end ='')
-        mem_val = uc.mem_read(modified_mem_addr, MODE)
-        for i in range(len(mem_val)):
-            print("\\x%x" %mem_val[i], end = "")
-        print()
-        mem_modified = False
-
-    print("[" + str(hex(address)) + "]", end=' ')
-    print("instruction :", end=' ')
-    modify_mem, addr_idx, op_str = print_instruction(address)
-    print("/ register data :", end=' ')
-    print_all_reg(uc)
-    print("/ modified register : ", end ='')
-    print(user_data[addr][1:], end = '')
-    print("/ clock count : ", end ='')
-    clock.cycle_cal(instructions[addr_idx][1], op_str)
-    if modify_mem != -1:
-        print_mem(uc, modify_mem, op_str)
-        mem_modified = True
-    sys.stdout = temp
-

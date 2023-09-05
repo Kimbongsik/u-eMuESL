@@ -1,7 +1,4 @@
 from emul import *
 
 if __name__ == '__main__':
-    run() # execute the program. start emulating
-
-
- 
+    run() # 프로그램 실행
