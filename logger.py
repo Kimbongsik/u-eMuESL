@@ -18,7 +18,7 @@ LogReg_header =  ['ctr','Address','Opcode', 'Operands',
 log_matrix = [LogReg_header]
 log_file = ""
 date = datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S")
-log_folder = "./log/" + date
+log_folder = "./log/" + date + " " + log_file_name
 
 # 로그 폴더(/log/%Y-%m-%d %H_%M_%S) 생성
 os.mkdir(log_folder)

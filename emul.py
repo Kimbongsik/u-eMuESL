@@ -104,28 +104,23 @@ def upload(uc):
 # 입출력 파일 생성
 def make_io_data_files(uc, i):
     # Log_VirOUT 파일 생성
+    vir_out_file_name = ""
+    
     if i == 0:
-        with open(log_folder + "/" + date + ' LogVirOUT.csv', 'w') as file:
-            wr = csv.writer(file)
-            out_data_list = []
-            addr = vir_out_addr
-            for i in range(vir_out_len // MODE):
-                out_data = int.from_bytes(uc.mem_read(addr, MODE), byteorder="little")
-                out_data_list.append(out_data)
-                addr += MODE
-            
-            wr.writerow(out_data_list)
+        vir_out_file_name = log_folder + "/" + date + ' LogVirOUT.csv'            
     else:
-        with open(log_folder + "/" + date + ' LogVirOUT_Faulty.csv', 'w') as file:
-            wr = csv.writer(file)
-            out_data_list = []
-            addr = vir_out_addr
-            for i in range(vir_out_len // MODE):
-                out_data = int.from_bytes(uc.mem_read(addr, MODE), byteorder="little")
-                out_data_list.append(out_data)
-                addr += MODE
-            
-            wr.writerow(out_data_list)
+        vir_out_file_name = log_folder + "/" + date + ' LogVirOUT_Faulty.csv'
+
+    file = open(vir_out_file_name, 'w', newline='')
+    wr = csv.writer(file)
+    out_data_list = []
+    addr = vir_out_addr
+    for i in range(vir_out_len // MODE):
+        out_data = int.from_bytes(uc.mem_read(addr, MODE), byteorder="little")
+        out_data_list.append(out_data)
+        addr += MODE
+        
+    wr.writerow(out_data_list)
 
     # Log_VirIN 파일 생성
     in_data_list = []
@@ -247,6 +242,7 @@ def run():
         with open(get_log_file_name(), 'w', newline='') as file:
             write = csv.writer(file)
             write.writerows(log_matrix)
+            make_io_data_files(mu, i)
 
         print("ERROR: %s" % e)
         
